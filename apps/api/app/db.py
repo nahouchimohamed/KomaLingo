@@ -48,7 +48,11 @@ def init_db() -> None:
                 for row in conn.execute(text("PRAGMA table_info(chapter_jobs)")).fetchall()
             }
             if "translate_provider" not in cols:
-                conn.execute(text("ALTER TABLE chapter_jobs ADD COLUMN translate_provider VARCHAR(32)"))  # additive
+                conn.execute(text("ALTER TABLE chapter_jobs ADD COLUMN translate_provider VARCHAR(32)"))
             if "translate_api_key" not in cols:
                 conn.execute(text("ALTER TABLE chapter_jobs ADD COLUMN translate_api_key VARCHAR(256)"))
+            if "processing_mode" not in cols:
+                conn.execute(
+                    text("ALTER TABLE chapter_jobs ADD COLUMN processing_mode VARCHAR(32) DEFAULT 'full'")
+                )
             conn.commit()

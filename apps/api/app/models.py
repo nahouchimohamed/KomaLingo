@@ -26,7 +26,8 @@ class ChapterJob(Base):
     status: Mapped[JobStatus] = mapped_column(Enum(JobStatus), default=JobStatus.pending, index=True)
     source_lang: Mapped[str] = mapped_column(String(16), default="auto")
     target_lang: Mapped[str] = mapped_column(String(16), default="en")
-    translate_provider: Mapped[str | None] = mapped_column(String(32), nullable=True)  # optional override
+    processing_mode: Mapped[str] = mapped_column(String(32), default="full")
+    translate_provider: Mapped[str | None] = mapped_column(String(32), nullable=True)
     translate_api_key: Mapped[str | None] = mapped_column(String(256), nullable=True)
     total_pages: Mapped[int] = mapped_column(Integer, default=0)
     completed_pages: Mapped[int] = mapped_column(Integer, default=0)

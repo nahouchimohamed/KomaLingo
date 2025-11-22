@@ -46,7 +46,6 @@ def process_chapter(job_id: str) -> dict:
             out_path = result_dir / page_path.name
 
             def on_stage(stage_name: str, idx: int = index, name: str = page_path.name) -> None:
-                # Re-fetch so progress writes stay fresh across long OCR waits
                 fresh = db.get(ChapterJob, job_id)
                 if not fresh:
                     return
@@ -59,15 +58,16 @@ def process_chapter(job_id: str) -> dict:
                 )
 
             try:
-                on_stage("ocr")  # progress UI
+                on_stage("ocr")
                 process_page(
                     page_path,
                     out_path,
                     source_lang=job.source_lang,
                     target_lang=job.target_lang,
                     on_stage=on_stage,
-                    translate_provider=job.translate_provider,  # from upload form
+                    translate_provider=job.translate_provider,
                     translate_api_key=job.translate_api_key,
+                    processing_mode=job.processing_mode or "full",
                 )
                 fresh = db.get(ChapterJob, job_id)
                 if fresh:
@@ -85,13 +85,13 @@ def process_chapter(job_id: str) -> dict:
                         db,
                         fresh,
                         status=JobStatus.failed,
-                        error=f"Failed on page {page_path.name}: {exc}",  # include page name
+                        error=f"Failed on page {page_path.name}: {exc}",
                         current_stage="failed",
                     )
                 return {"job_id": job_id, "status": "failed", "error": str(exc)}
 
         zip_path = result_dir.parent / f"{job.id}.zip"
-        pack_result_zip(result_dir, zip_path)  # downloadable chapter archive
+        pack_result_zip(result_dir, zip_path)
         fresh = db.get(ChapterJob, job_id)
         if fresh:
             _update_job(

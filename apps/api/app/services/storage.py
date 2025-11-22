@@ -39,6 +39,9 @@ def pack_result_zip(result_dir: Path, zip_path: Path) -> Path:
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for image in list_page_images(result_dir):
             zf.write(image, arcname=image.name)
+            sidecar = result_dir / f"{image.name}.regions.json"
+            if sidecar.exists():
+                zf.write(sidecar, arcname=sidecar.name)
     return zip_path
 
 

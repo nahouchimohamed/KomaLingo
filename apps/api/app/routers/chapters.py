@@ -10,7 +10,14 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.db import get_db
 from app.models import ChapterJob, JobStatus
-from app.schemas import ChapterCreateResponse, ChapterStatusResponse, PageStatus
+from app.pipeline.orchestrator import VALID_MODES
+from app.schemas import (
+    ChapterCreateResponse,
+    ChapterStatusResponse,
+    PageRegionsResponse,
+    PageStatus,
+    RegionStatus,
+)
 from app.services.queue import enqueue_chapter_job
 from app.services.storage import (
     ensure_clean_dir,
@@ -21,7 +28,7 @@ from app.services.storage import (
 
 router = APIRouter(prefix="/api/chapters", tags=["chapters"])
 
-ARCHIVE_EXTS = {".zip", ".cbz"}  # comic book archives
+ARCHIVE_EXTS = {".zip", ".cbz"}
 
 
 @router.post("", response_model=ChapterCreateResponse)
@@ -29,8 +36,9 @@ async def create_chapter(
     title: str = Form(default="Untitled Chapter"),
     source_lang: str = Form(default="auto"),
     target_lang: str = Form(default="en"),
+    processing_mode: str = Form(default="full"),
     translate_provider: str = Form(default=""),
-    translate_api_key: str = Form(default=""),  # optional
+    translate_api_key: str = Form(default=""),
     files: list[UploadFile] = File(...),
     db: Session = Depends(get_db),
 ) -> ChapterCreateResponse:
@@ -63,11 +71,21 @@ async def create_chapter(
     pages_root = upload_dir / "pages"
     pages = list_page_images(pages_root if pages_root.exists() else upload_dir)
     if not pages:
-        raise HTTPException(status_code=400, detail="No image pages found in upload")  # empty zip guard
+        raise HTTPException(status_code=400, detail="No image pages found in upload")
+
+    mode = (processing_mode or "full").strip().lower()
+    if mode not in VALID_MODES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid processing_mode. Use one of: {', '.join(sorted(VALID_MODES))}",
+        )
 
     provider = (translate_provider or "").strip().lower() or None
     api_key = (translate_api_key or "").strip() or None
-    if provider == "gemini" and not api_key:
+    if mode == "strip":
+        provider = None
+        api_key = None
+    elif provider == "gemini" and not api_key:
         settings_key = get_settings().gemini_api_key
         api_key = settings_key or None
 
@@ -77,6 +95,7 @@ async def create_chapter(
         status=JobStatus.pending,
         source_lang=source_lang or "auto",
         target_lang=target_lang or "en",
+        processing_mode=mode,
         translate_provider=provider,
         translate_api_key=api_key,
         total_pages=len(pages),
@@ -95,9 +114,14 @@ async def create_chapter(
         job.error = f"Failed to enqueue job: {exc}"
         db.add(job)
         db.commit()
-        raise HTTPException(status_code=503, detail="Queue unavailable. Is Redis running?") from exc  # worker offline
+        raise HTTPException(status_code=503, detail="Queue unavailable. Is Redis running?") from exc
 
-    return ChapterCreateResponse(job_id=job_id, status=job.status.value, total_pages=len(pages))
+    return ChapterCreateResponse(
+        job_id=job_id,
+        status=job.status.value,
+        total_pages=len(pages),
+        processing_mode=mode,
+    )
 
 
 @router.get("/{job_id}", response_model=ChapterStatusResponse)
@@ -111,11 +135,17 @@ def get_chapter(job_id: str, db: Session = Depends(get_db)) -> ChapterStatusResp
     result_by_name = {
         p.name: p for p in (list_page_images(result_dir) if result_dir.exists() else [])
     }
-    bust = int(job.updated_at.timestamp()) if job.updated_at else 0  # bust browser cache when a page finishes
+    bust = int(job.updated_at.timestamp()) if job.updated_at else 0
 
     pages: list[PageStatus] = []
     for index, page in enumerate(upload_pages):
         original = f"/api/chapters/{job_id}/pages/{index}/original?t={bust}"
+        regions_path = result_dir / f"{page.name}.regions.json"
+        regions_url = (
+            f"/api/chapters/{job_id}/pages/{index}/regions?t={bust}"
+            if regions_path.exists()
+            else None
+        )
         if page.name in result_by_name:
             status = "done"
             stage = "completed"
@@ -140,6 +170,7 @@ def get_chapter(job_id: str, db: Session = Depends(get_db)) -> ChapterStatusResp
                 stage=stage,
                 original_url=original,
                 preview_url=preview,
+                regions_url=regions_url,
                 error=job.error if status == "failed" else None,
             )
         )
@@ -151,6 +182,7 @@ def get_chapter(job_id: str, db: Session = Depends(get_db)) -> ChapterStatusResp
         status=job.status.value,
         source_lang=job.source_lang,
         target_lang=job.target_lang,
+        processing_mode=job.processing_mode or "full",
         total_pages=job.total_pages,
         completed_pages=job.completed_pages,
         progress=progress,
@@ -210,11 +242,31 @@ def get_page_preview(job_id: str, page_index: int, db: Session = Depends(get_db)
     if page_index < 0 or page_index >= len(upload_pages):
         raise HTTPException(status_code=404, detail="Page not found")
 
-    source_name = upload_pages[page_index].name  # match result by name, not index alone
+    source_name = upload_pages[page_index].name
     result_path = Path(job.result_dir) / source_name
     if result_path.exists():
         return FileResponse(result_path, media_type=_media_type(result_path))
 
-    # Fall back to original while this page is still processing
     path = upload_pages[page_index]
     return FileResponse(path, media_type=_media_type(path))
+
+
+@router.get("/{job_id}/pages/{page_index}/regions", response_model=PageRegionsResponse)
+def get_page_regions(job_id: str, page_index: int, db: Session = Depends(get_db)) -> PageRegionsResponse:
+    import json
+
+    job = db.get(ChapterJob, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    upload_pages = list_page_images(Path(job.upload_dir))
+    if page_index < 0 or page_index >= len(upload_pages):
+        raise HTTPException(status_code=404, detail="Page not found")
+
+    sidecar = Path(job.result_dir) / f"{upload_pages[page_index].name}.regions.json"
+    if not sidecar.exists():
+        raise HTTPException(status_code=404, detail="No regions available for this page")
+
+    payload = json.loads(sidecar.read_text(encoding="utf-8"))
+    regions = [RegionStatus(**item) for item in payload.get("regions", [])]
+    return PageRegionsResponse(mode=payload.get("mode", job.processing_mode or "full"), regions=regions)
