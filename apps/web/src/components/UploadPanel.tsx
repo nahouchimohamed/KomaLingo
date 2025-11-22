@@ -2,10 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+export type ProcessingMode = "full" | "strip" | "translate_only";
+
 export type UploadOptions = {
   files: File[];
   title: string;
   sourceLang: string;
+  processingMode: ProcessingMode;
   translateProvider: string;
   translateApiKey: string;
 };
@@ -15,13 +18,33 @@ type Props = {
   busy: boolean;
 };
 
-const KEY_STORAGE = "komalingo.gemini_key"; // browser-only
-const PROVIDER_STORAGE = "komalingo.translate_provider"; // remember choice
+const KEY_STORAGE = "komalingo.gemini_key";
+const PROVIDER_STORAGE = "komalingo.translate_provider";
+const MODE_STORAGE = "komalingo.processing_mode";
+
+const MODE_COPY: Record<ProcessingMode, { label: string; hint: string; submit: string }> = {
+  full: {
+    label: "Full translate + redraw",
+    hint: "OCR → translate → clean bubbles → draw English on the page.",
+    submit: "Translate to English",
+  },
+  strip: {
+    label: "Strip text only",
+    hint: "Detect and erase dialogue without translating. Good for blanking pages.",
+    submit: "Strip text from pages",
+  },
+  translate_only: {
+    label: "Translate without redraw",
+    hint: "Keep original art. Export OCR text + English in a sidecar JSON next to each page.",
+    submit: "Translate text only",
+  },
+};
 
 export function UploadPanel({ onSubmit, busy }: Props) {
   const [files, setFiles] = useState<File[]>([]);
   const [title, setTitle] = useState("");
   const [sourceLang, setSourceLang] = useState("auto");
+  const [processingMode, setProcessingMode] = useState<ProcessingMode>("full");
   const [translateProvider, setTranslateProvider] = useState("google");
   const [translateApiKey, setTranslateApiKey] = useState("");
   const [dragOver, setDragOver] = useState(false);
@@ -31,8 +54,12 @@ export function UploadPanel({ onSubmit, busy }: Props) {
     try {
       const savedKey = window.localStorage.getItem(KEY_STORAGE);
       const savedProvider = window.localStorage.getItem(PROVIDER_STORAGE);
+      const savedMode = window.localStorage.getItem(MODE_STORAGE);
       if (savedKey) setTranslateApiKey(savedKey);
       if (savedProvider) setTranslateProvider(savedProvider);
+      if (savedMode === "full" || savedMode === "strip" || savedMode === "translate_only") {
+        setProcessingMode(savedMode);
+      }
     } catch {
       // ignore storage failures
     }
@@ -54,19 +81,23 @@ export function UploadPanel({ onSubmit, busy }: Props) {
     setError(null);
   }, []);
 
+  const needsTranslator = processingMode !== "strip";
+  const modeMeta = MODE_COPY[processingMode];
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!files.length) {
       setError("Drop a ZIP/CBZ chapter or page images first.");
       return;
     }
-    if (translateProvider === "gemini" && !translateApiKey.trim()) {
+    if (needsTranslator && translateProvider === "gemini" && !translateApiKey.trim()) {
       setError("Paste a Gemini API key, or switch back to the free translator.");
       return;
     }
     try {
       window.localStorage.setItem(KEY_STORAGE, translateApiKey.trim());
       window.localStorage.setItem(PROVIDER_STORAGE, translateProvider);
+      window.localStorage.setItem(MODE_STORAGE, processingMode);
     } catch {
       // ignore
     }
@@ -75,6 +106,7 @@ export function UploadPanel({ onSubmit, busy }: Props) {
         files,
         title,
         sourceLang,
+        processingMode,
         translateProvider,
         translateApiKey: translateApiKey.trim(),
       });
@@ -146,31 +178,47 @@ export function UploadPanel({ onSubmit, busy }: Props) {
         </label>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block text-sm">
-          <span className="mb-1.5 block font-medium text-black/70">Translator</span>
-          <select
-            value={translateProvider}
-            onChange={(e) => setTranslateProvider(e.target.value)}
-            className="w-full rounded-xl border border-[var(--line)] bg-white/80 px-3 py-2.5 outline-none ring-[var(--accent)] focus:ring-2"
-          >
-            <option value="google">Free Google translate (default)</option>
-            <option value="mymemory">Free MyMemory</option>
-            <option value="gemini">Gemini (API key)</option>
-          </select>
-        </label>
-        <label className="block text-sm">
-          <span className="mb-1.5 block font-medium text-black/70">Gemini API key (optional)</span>
-          <input
-            type="password"
-            value={translateApiKey}
-            onChange={(e) => setTranslateApiKey(e.target.value)}
-            placeholder="Only needed for Gemini"
-            disabled={translateProvider !== "gemini"} // hide unused key entry
-            className="w-full rounded-xl border border-[var(--line)] bg-white/80 px-3 py-2.5 outline-none ring-[var(--accent)] focus:ring-2 disabled:opacity-50"
-          />
-        </label>
-      </div>
+      <label className="block text-sm">
+        <span className="mb-1.5 block font-medium text-black/70">Processing mode</span>
+        <select
+          value={processingMode}
+          onChange={(e) => setProcessingMode(e.target.value as ProcessingMode)}
+          className="w-full rounded-xl border border-[var(--line)] bg-white/80 px-3 py-2.5 outline-none ring-[var(--accent)] focus:ring-2"
+        >
+          <option value="full">{MODE_COPY.full.label}</option>
+          <option value="strip">{MODE_COPY.strip.label}</option>
+          <option value="translate_only">{MODE_COPY.translate_only.label}</option>
+        </select>
+        <p className="mt-1.5 text-xs text-black/50">{modeMeta.hint}</p>
+      </label>
+
+      {needsTranslator && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block text-sm">
+            <span className="mb-1.5 block font-medium text-black/70">Translator</span>
+            <select
+              value={translateProvider}
+              onChange={(e) => setTranslateProvider(e.target.value)}
+              className="w-full rounded-xl border border-[var(--line)] bg-white/80 px-3 py-2.5 outline-none ring-[var(--accent)] focus:ring-2"
+            >
+              <option value="google">Free Google translate (default)</option>
+              <option value="mymemory">Free MyMemory</option>
+              <option value="gemini">Gemini (API key)</option>
+            </select>
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1.5 block font-medium text-black/70">Gemini API key (optional)</span>
+            <input
+              type="password"
+              value={translateApiKey}
+              onChange={(e) => setTranslateApiKey(e.target.value)}
+              placeholder="Only needed for Gemini"
+              disabled={translateProvider !== "gemini"}
+              className="w-full rounded-xl border border-[var(--line)] bg-white/80 px-3 py-2.5 outline-none ring-[var(--accent)] focus:ring-2 disabled:opacity-50"
+            />
+          </label>
+        </div>
+      )}
 
       {error && <p className="text-sm text-[var(--accent)]">{error}</p>}
 
@@ -179,7 +227,7 @@ export function UploadPanel({ onSubmit, busy }: Props) {
         disabled={busy}
         className="w-full rounded-xl bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {busy ? "Uploading chapter…" : "Translate to English"}
+        {busy ? "Uploading chapter…" : modeMeta.submit}
       </button>
     </form>
   );

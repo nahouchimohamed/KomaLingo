@@ -44,6 +44,7 @@ export default function HomePage() {
       form.append("title", options.title || "Untitled Chapter");
       form.append("source_lang", options.sourceLang);
       form.append("target_lang", "en");
+      form.append("processing_mode", options.processingMode);
       form.append("translate_provider", options.translateProvider);
       if (options.translateApiKey) {
         form.append("translate_api_key", options.translateApiKey);
@@ -70,8 +71,8 @@ export default function HomePage() {
           Translate a chapter the way you upload it.
         </h1>
         <p className="mt-4 max-w-xl text-base text-black/65">
-          Drop a ZIP/CBZ of Japanese or Korean pages. Pages unlock one-by-one — free by default, optional Gemini key for
-          better dialogue.
+          Drop a ZIP/CBZ of Japanese or Korean pages. Choose full redraw, strip text only, or translate without
+          touching the art — pages unlock one-by-one.
         </p>
       </header>
 

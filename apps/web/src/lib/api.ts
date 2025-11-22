@@ -1,3 +1,11 @@
+export type RegionStatus = {
+  text: string;
+  translation: string;
+  bbox: number[];
+  confidence: number;
+  language: string;
+};
+
 export type PageStatus = {
   index: number;
   filename: string;
@@ -5,15 +13,17 @@ export type PageStatus = {
   stage: string | null;
   original_url: string | null;
   preview_url: string | null;
+  regions_url: string | null;
   error: string | null;
 };
 
-export type ChapterStatus = { // mirrored from FastAPI schema
+export type ChapterStatus = {
   job_id: string;
   title: string;
   status: string;
   source_lang: string;
   target_lang: string;
+  processing_mode: string;
   total_pages: number;
   completed_pages: number;
   progress: number;
@@ -25,7 +35,16 @@ export type ChapterStatus = { // mirrored from FastAPI schema
   updated_at: string;
 };
 
-export async function createChapter(form: FormData): Promise<{ job_id: string; total_pages: number }> {
+export type PageRegions = {
+  mode: string;
+  regions: RegionStatus[];
+};
+
+export async function createChapter(form: FormData): Promise<{
+  job_id: string;
+  total_pages: number;
+  processing_mode: string;
+}> {
   const res = await fetch("/api/chapters", {
     method: "POST",
     body: form,
@@ -41,6 +60,14 @@ export async function getChapter(jobId: string): Promise<ChapterStatus> {
   const res = await fetch(`/api/chapters/${jobId}`, { cache: "no-store" });
   if (!res.ok) {
     throw new Error("Failed to load job status");
+  }
+  return res.json();
+}
+
+export async function getPageRegions(jobId: string, pageIndex: number): Promise<PageRegions> {
+  const res = await fetch(`/api/chapters/${jobId}/pages/${pageIndex}/regions`, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error("Failed to load page regions");
   }
   return res.json();
 }

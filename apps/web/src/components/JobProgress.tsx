@@ -1,45 +1,100 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { ChapterStatus, PageStatus } from "@/lib/api";
-import { downloadUrl } from "@/lib/api";
+import { useEffect, useMemo, useState } from "react";
+import type { ChapterStatus, PageRegions, PageStatus, RegionStatus } from "@/lib/api";
+import { downloadUrl, getPageRegions } from "@/lib/api";
 
 type Props = {
   job: ChapterStatus;
   onReset: () => void;
 };
 
+function modeLabel(mode: string): string {
+  if (mode === "strip") return "Strip text";
+  if (mode === "translate_only") return "Translate only";
+  return "Full redraw";
+}
+
+function doneLabel(mode: string): string {
+  if (mode === "strip") return "Text stripped — click to view";
+  if (mode === "translate_only") return "Translation ready — click for text";
+  return "Translated — click to view";
+}
+
 function stageLabel(page: PageStatus, job: ChapterStatus): string {
-  if (page.status === "done") return "Translated — click to view";
+  if (page.status === "done") return doneLabel(job.processing_mode);
   if (page.status === "failed") return page.error || "Failed";
   if (page.status === "processing") {
     const stage = page.stage || job.current_stage || "working";
     if (stage.startsWith("ocr")) return "Reading text (OCR)…";
     if (stage.startsWith("translate")) return "Translating…";
-    if (stage.startsWith("inpaint")) return "Cleaning bubbles…";
+    if (stage.startsWith("inpaint")) {
+      return job.processing_mode === "strip" ? "Erasing text…" : "Cleaning bubbles…";
+    }
     if (stage.startsWith("typeset")) return "Drawing English…";
     return stage;
   }
   return "Queued";
 }
 
+function downloadButtonLabel(mode: string): string {
+  if (mode === "strip") return "Download cleaned ZIP";
+  if (mode === "translate_only") return "Download pages + translations";
+  return "Download translated ZIP";
+}
+
 export function JobProgress({ job, onReset }: Props) {
   const pct = Math.round(job.progress * 100);
-  const [viewer, setViewer] = useState<{ src: string; title: string } | null>(null);
+  const [viewer, setViewer] = useState<{ src: string; title: string; pageIndex: number } | null>(null);
+  const [regions, setRegions] = useState<RegionStatus[] | null>(null);
+  const [regionsLoading, setRegionsLoading] = useState(false);
 
   const hint = useMemo(() => {
     if (job.status === "completed") return "All pages ready.";
     if (job.completed_pages === 0 && job.status === "processing") {
       return "First page may take a bit while OCR models load. Later pages are faster — each finished page appears below.";
     }
+    if (job.processing_mode === "translate_only") {
+      return "Original art stays untouched. Open a finished page to read the English lines.";
+    }
+    if (job.processing_mode === "strip") {
+      return "Dialogue is erased from each page as it finishes. No translation is written back.";
+    }
     return "Pages unlock one-by-one as they finish. Click any completed page to zoom.";
   }, [job]);
+
+  useEffect(() => {
+    if (!viewer || job.processing_mode !== "translate_only") {
+      setRegions(null);
+      return;
+    }
+    const page = job.pages[viewer.pageIndex];
+    if (!page?.regions_url) {
+      setRegions([]);
+      return;
+    }
+    let cancelled = false;
+    setRegionsLoading(true);
+    getPageRegions(job.job_id, viewer.pageIndex)
+      .then((payload: PageRegions) => {
+        if (!cancelled) setRegions(payload.regions);
+      })
+      .catch(() => {
+        if (!cancelled) setRegions([]);
+      })
+      .finally(() => {
+        if (!cancelled) setRegionsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [viewer, job.job_id, job.pages, job.processing_mode]);
 
   return (
     <section className="rise space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-black/45">Job</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-black/45">Job · {modeLabel(job.processing_mode)}</p>
           <h2 className="text-2xl font-bold" style={{ fontFamily: "var(--font-display), sans-serif" }}>
             {job.title}
           </h2>
@@ -53,7 +108,7 @@ export function JobProgress({ job, onReset }: Props) {
               href={downloadUrl(job.job_id)}
               className="rounded-xl bg-[var(--ink)] px-4 py-2.5 text-sm font-semibold text-[var(--paper)]"
             >
-              Download translated ZIP
+              {downloadButtonLabel(job.processing_mode)}
             </a>
           )}
           <button
@@ -92,7 +147,7 @@ export function JobProgress({ job, onReset }: Props) {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {job.pages.map((page) => {
-          const imageSrc = page.preview_url || page.original_url; // original while pending
+          const imageSrc = page.preview_url || page.original_url;
           const canOpen = Boolean(imageSrc);
           return (
             <article
@@ -112,7 +167,8 @@ export function JobProgress({ job, onReset }: Props) {
                   imageSrc &&
                   setViewer({
                     src: page.preview_url || page.original_url || imageSrc,
-                    title: `${page.filename} · ${page.status}{page.status === "done" ? " ✓" : ""}`,
+                    title: `${page.filename} · ${page.status}`,
+                    pageIndex: page.index,
                   })
                 }
                 className="relative block aspect-[3/4] w-full bg-[var(--paper-deep)] text-left"
@@ -161,23 +217,46 @@ export function JobProgress({ job, onReset }: Props) {
           role="presentation"
         >
           <div
-            className="max-h-[92vh] max-w-4xl overflow-auto rounded-2xl bg-[var(--paper)] p-3 shadow-2xl"
+            className="grid max-h-[92vh] w-full max-w-5xl gap-4 overflow-auto rounded-2xl bg-[var(--paper)] p-3 shadow-2xl lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.9fr)]"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
-            aria-modal="true" /* page lightbox */
+            aria-modal="true"
           >
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <p className="truncate text-sm font-medium">{viewer.title}</p>
-              <button
-                type="button"
-                onClick={() => setViewer(null)}
-                className="rounded-lg bg-[var(--ink)] px-3 py-1.5 text-xs font-semibold text-[var(--paper)]"
-              >
-                Close
-              </button>
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <p className="truncate text-sm font-medium">{viewer.title}</p>
+                <button
+                  type="button"
+                  onClick={() => setViewer(null)}
+                  className="rounded-lg bg-[var(--ink)] px-3 py-1.5 text-xs font-semibold text-[var(--paper)]"
+                >
+                  Close
+                </button>
+              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={viewer.src} alt={viewer.title} className="max-h-[80vh] w-auto max-w-full rounded-lg" />
             </div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={viewer.src} alt={viewer.title} className="max-h-[80vh] w-auto max-w-full rounded-lg" />
+            {job.processing_mode === "translate_only" && (
+              <div className="rounded-xl border border-[var(--line)] bg-white/70 p-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Translations</p>
+                {regionsLoading ? (
+                  <p className="text-sm text-black/50">Loading…</p>
+                ) : !regions || regions.length === 0 ? (
+                  <p className="text-sm text-black/50">No dialogue detected on this page.</p>
+                ) : (
+                  <ul className="max-h-[70vh] space-y-3 overflow-auto pr-1">
+                    {regions.map((region, index) => (
+                      <li key={`${region.bbox.join("-")}-${index}`} className="rounded-lg bg-[var(--paper-deep)]/60 p-3">
+                        <p className="text-xs text-black/45">{region.text || "—"}</p>
+                        <p className="mt-1 text-sm font-medium text-[var(--ink)]">
+                          {region.translation || "(no translation)"}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
