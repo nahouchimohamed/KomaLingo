@@ -26,6 +26,16 @@ cd apps/web && npm install && npm run dev
 - App: http://localhost:3000
 - API health: http://localhost:8000/api/health
 
+## Processing modes
+
+| Mode | What it does |
+|------|----------------|
+| `full` | OCR → translate → inpaint → typeset English onto the page (default) |
+| `strip` | OCR → inpaint only — erase dialogue without translating |
+| `translate_only` | OCR → translate — keep original art and write a `.regions.json` sidecar per page |
+
+Choose the mode in the upload UI (`processing_mode` form field). Strip mode skips the translator. Translate-only keeps the artwork untouched and shows English lines in the page viewer.
+
 ## Upload format
 
 Same convention scanlation sites use:
@@ -50,11 +60,12 @@ Free path needs no keys. For cleaner comic dialogue, choose Gemini in the UI and
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/api/chapters` | Upload chapter (`files`, optional `translate_provider`, `translate_api_key`) |
+| POST | `/api/chapters` | Upload chapter (`files`, `processing_mode`, optional translator fields) |
 | GET | `/api/chapters/{id}` | Job status + per-page progress |
-| GET | `/api/chapters/{id}/pages/{n}` | Translated preview (falls back to original) |
+| GET | `/api/chapters/{id}/pages/{n}` | Result preview (falls back to original) |
 | GET | `/api/chapters/{id}/pages/{n}/original` | Original page |
-| GET | `/api/chapters/{id}/download` | Translated ZIP |
+| GET | `/api/chapters/{id}/pages/{n}/regions` | OCR/translation sidecar (translate-only) |
+| GET | `/api/chapters/{id}/download` | Result ZIP |
 
 ## Notes
 
@@ -66,23 +77,3 @@ Free path needs no keys. For cleaner comic dialogue, choose Gemini in the UI and
 ## License
 
 All rights reserved unless otherwise noted.
-
-Aim for readable dialogue first; perfect SFX recreation is out of scope for the free path.
-
-Default path stays free; paid/cloud keys remain optional.
-
-Finished pages can be opened before the ZIP is ready.
-
-Gemini keys can be created in Google AI Studio for optional higher-quality phrasing.
-
-OpenCV inpaint replaces hard white rectangle fills on the free path.
-
-Expect imperfect SFX; prioritize readable dialogue first.
-
-Worker warm-up loads JP/KR OCR packs once per container start.
-
-Maintained solely by nahouchimohamed.
-
-OCR weights persist in the `paddle_models` Docker volume across restarts.
-
-Source language Auto picks JP/KR from OCR script hints.
