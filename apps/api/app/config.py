@@ -20,6 +20,17 @@ class Settings(BaseSettings):
     source_lang: str = "auto"
     target_lang: str = "en"
     queue_name: str = "komalingo"
+    max_upload_bytes: int = 250_000_000
+    max_pages_per_chapter: int = 200
+    job_ttl_hours: int = 72
+    ocr_min_confidence: float = 0.48
+    ocr_min_area: int = 80
+    inpaint_radius: int = 3
+    inpaint_mask_pad: int = 5
+    typeset_font: str = "default"
+    skip_sfx: bool = False
+    continue_on_page_error: bool = True
+    translation_cache_ttl: int = 86400
 
     @property
     def uploads_dir(self) -> Path:
