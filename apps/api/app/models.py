@@ -45,3 +45,5 @@ class ChapterJob(Base):
     failed_pages: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+from app.models_pages import ChapterPage  # noqa: E402,F401
