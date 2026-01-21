@@ -39,9 +39,12 @@ class ChapterStatusResponse(BaseModel):
     processing_mode: str = "full"
     total_pages: int
     completed_pages: int
+    failed_pages: int = 0
     progress: float = Field(ge=0, le=1)
     current_stage: str
     error: str | None = None
+    cancel_requested: bool = False
+    font_name: str | None = None
     pages: list[PageStatus] = []
     download_ready: bool = False
     created_at: datetime
