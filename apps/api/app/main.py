@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.db import init_db
-from app.routers import chapter_list, chapters
+from app.routers import chapter_actions, chapter_list, chapters
 from app.schemas import HealthResponse
 
 settings = get_settings()
@@ -19,6 +19,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(chapter_list.router)
+app.include_router(chapter_actions.router)
 app.include_router(chapters.router)
 
 
