@@ -39,6 +39,9 @@ async def create_chapter(
     processing_mode: str = Form(default="full"),
     translate_provider: str = Form(default=""),
     translate_api_key: str = Form(default=""),
+    font_name: str = Form(default=""),
+    glossary: str = Form(default=""),
+    skip_sfx: str = Form(default="false"),
     files: list[UploadFile] = File(...),
     db: Session = Depends(get_db),
 ) -> ChapterCreateResponse:
