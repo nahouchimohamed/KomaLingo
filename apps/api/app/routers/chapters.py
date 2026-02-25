@@ -18,6 +18,7 @@ from app.schemas import (
     PageStatus,
     RegionStatus,
 )
+from app.services.limits import assert_page_count, assert_upload_size
 from app.services.queue import enqueue_chapter_job
 from app.services.storage import (
     ensure_clean_dir,
@@ -55,10 +56,12 @@ async def create_chapter(
 
     saved_pages: list[Path] = []
     image_buffer: list[tuple[str, bytes]] = []
+    total_bytes = 0
 
     for upload in files:
         filename = upload.filename or "page.png"
         data = await upload.read()
+        total_bytes += len(data)
         suffix = Path(filename).suffix.lower()
         if suffix in ARCHIVE_EXTS:
             archive_path = upload_dir / filename
@@ -75,6 +78,8 @@ async def create_chapter(
     pages = list_page_images(pages_root if pages_root.exists() else upload_dir)
     if not pages:
         raise HTTPException(status_code=400, detail="No image pages found in upload")
+    assert_upload_size(total_bytes, settings)
+    assert_page_count(len(pages), settings)
 
     mode = (processing_mode or "full").strip().lower()
     if mode not in VALID_MODES:
