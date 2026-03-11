@@ -4,6 +4,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
+from app.pipeline.fonts import candidates_for
 from app.pipeline.types import TextRegion
 
 FONT_CANDIDATES = [
@@ -19,8 +20,8 @@ FONT_CANDIDATES = [
 ]
 
 
-def _load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
-    for candidate in FONT_CANDIDATES:
+def _load_font(size: int, font_name: str | None = None) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+    for candidate in candidates_for(font_name) + FONT_CANDIDATES:
         if candidate.exists():
             try:
                 return ImageFont.truetype(str(candidate), size=size)
@@ -46,11 +47,11 @@ def _wrap_text(text: str, font: ImageFont.ImageFont, max_width: int, draw: Image
     return lines
 
 
-def _fit_font(text: str, box_w: int, box_h: int, draw: ImageDraw.ImageDraw) -> tuple[ImageFont.ImageFont, list[str], int]:
+def _fit_font(text: str, box_w: int, box_h: int, draw: ImageDraw.ImageDraw, font_name: str | None = None) -> tuple[ImageFont.ImageFont, list[str], int]:
     # English is longer than JP/KR — start smaller and shrink aggressively.
     start = min(40, max(11, int(box_h * 0.4)))  # EN longer than JP/KR
     for size in range(start, 8, -1):
-        font = _load_font(size)
+        font = _load_font(size, font_name=font_name)
         lines = _wrap_text(text, font, max(10, box_w - 10), draw)
         line_h = size + max(2, size // 6)
         total_h = line_h * len(lines)
@@ -62,7 +63,7 @@ def _fit_font(text: str, box_w: int, box_h: int, draw: ImageDraw.ImageDraw) -> t
     return font, lines, 11
 
 
-def render_translations(image_path: Path, regions: list[TextRegion], output_path: Path) -> Path:
+def render_translations(image_path: Path, regions: list[TextRegion], output_path: Path, font_name: str | None = None) -> Path:
     image = Image.open(image_path).convert("RGB")
     draw = ImageDraw.Draw(image)
 
