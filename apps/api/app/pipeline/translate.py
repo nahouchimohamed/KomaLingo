@@ -8,7 +8,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import httpx
 
 from app.config import get_settings
+from app.pipeline.retry import with_retries
 from app.pipeline.types import TextRegion
+from app.services.translation_cache import get_cached_translation, set_cached_translation
 
 logger = logging.getLogger(__name__)
 
@@ -69,8 +71,15 @@ class GoogleFreeTranslateProvider(TranslateProvider):  # no API key
                 source = _detect_source(region.text, region.language)
                 if source == "auto":
                     source = "ja"
+                cached = get_cached_translation(region.text, target_lang, "google")
+                if cached:
+                    return idx, cached
                 try:
-                    return idx, self._translate_one(client, region.text[:4500], source, target_lang)
+                    translated = with_retries(
+                        lambda: self._translate_one(client, region.text[:4500], source, target_lang)
+                    )
+                    set_cached_translation(region.text, target_lang, "google", translated)
+                    return idx, translated
                 except Exception:
                     logger.exception("Google translate failed for %r", region.text[:40])
                     return idx, region.text
