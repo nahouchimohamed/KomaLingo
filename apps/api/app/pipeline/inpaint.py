@@ -9,6 +9,7 @@ import numpy as np
 from PIL import Image
 
 from app.config import get_settings
+from app.pipeline.inpaint_settings import mask_pad, telea_radius
 from app.pipeline.types import TextRegion
 
 logger = logging.getLogger(__name__)
@@ -42,9 +43,8 @@ class Cv2InpaintProvider(InpaintProvider):  # default free path
         if image is None:
             raise ValueError(f"Unable to read image: {image_path}")
         h, w = image.shape[:2]
-        mask = _build_mask(h, w, regions, pad=5)  # cover glyph edges
-        # TELEA is quick and works well on flat bubble interiors
-        cleaned = cv2.inpaint(image, mask, inpaintRadius=3, flags=cv2.INPAINT_TELEA)  # small radius
+        mask = _build_mask(h, w, regions, pad=mask_pad())
+        cleaned = cv2.inpaint(image, mask, inpaintRadius=telea_radius(), flags=cv2.INPAINT_TELEA)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         cv2.imwrite(str(output_path), cleaned)
         return output_path
