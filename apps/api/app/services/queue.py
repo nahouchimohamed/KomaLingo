@@ -23,3 +23,14 @@ def enqueue_chapter_job(job_id: str) -> str:
         failure_ttl=86400,
     )
     return job.id
+
+
+def enqueue_cleanup_job() -> str:
+    queue = get_queue()
+    job = queue.enqueue(
+        "app.workers.cleanup.cleanup_expired_jobs",
+        job_timeout="30m",
+        result_ttl=3600,
+        failure_ttl=3600,
+    )
+    return job.id
