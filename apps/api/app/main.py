@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.db import init_db
 from app.logging_setup import configure_logging
-from app.routers import chapter_actions, chapter_list, chapter_pages, chapters
+from app.routers import chapter_actions, chapter_download, chapter_list, chapter_pages, chapters
 from app.schemas import HealthResponse
 from app.services.health import probe_health
 
@@ -23,6 +23,7 @@ app.add_middleware(
 app.include_router(chapter_list.router)
 app.include_router(chapter_actions.router)
 app.include_router(chapter_pages.router)
+app.include_router(chapter_download.router)
 app.include_router(chapters.router)
 
 
