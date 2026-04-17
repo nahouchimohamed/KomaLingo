@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { UploadPanel, UploadOptions } from "@/components/UploadPanel";
 import { JobProgress } from "@/components/JobProgress";
@@ -11,6 +12,15 @@ export default function HomePage() {
   const [job, setJob] = useState<ChapterStatus | null>(null);
 
   useEffect(() => {
+    try {
+      const last = window.localStorage.getItem("komalingo.last_job");
+      if (last && !jobId) setJobId(last);
+    } catch {
+      // ignore
+    }
+  }, [jobId]);
+
+  useEffect(() => {
     if (!jobId) return;
     let cancelled = false;
     let timer: number | undefined;
@@ -19,7 +29,7 @@ export default function HomePage() {
       try {
         const status = await getChapter(jobId!);
         if (!cancelled) setJob(status);
-        if (status.status === "completed" || status.status === "failed") {
+        if (status.status === "completed" || status.status === "failed" || status.status === "cancelled") {
           return;
         }
       } catch {
@@ -43,9 +53,12 @@ export default function HomePage() {
       const form = new FormData();
       form.append("title", options.title || "Untitled Chapter");
       form.append("source_lang", options.sourceLang);
-      form.append("target_lang", "en");
+      form.append("target_lang", options.targetLang);
       form.append("processing_mode", options.processingMode);
       form.append("translate_provider", options.translateProvider);
+      form.append("font_name", options.fontName);
+      form.append("glossary", options.glossary);
+      form.append("skip_sfx", options.skipSfx ? "true" : "false");
       if (options.translateApiKey) {
         form.append("translate_api_key", options.translateApiKey);
       }
@@ -55,6 +68,11 @@ export default function HomePage() {
       const created = await createChapter(form);
       setJobId(created.job_id);
       setJob(null);
+      try {
+        window.localStorage.setItem("komalingo.last_job", created.job_id);
+      } catch {
+        // ignore
+      }
     } finally {
       setBusy(false);
     }
@@ -63,7 +81,12 @@ export default function HomePage() {
   return (
     <main className="mx-auto min-h-screen max-w-5xl px-5 pb-20 pt-10 sm:px-8">
       <header className="rise mb-10 max-w-2xl">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-[var(--accent)]">KomaLingo</p>
+        <div className="mb-3 flex flex-wrap items-center gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--accent)]">KomaLingo</p>
+          <Link href="/history" className="text-xs font-medium text-black/55 hover:text-[var(--accent)]">
+            History
+          </Link>
+        </div>
         <h1
           className="text-4xl font-extrabold leading-tight tracking-tight text-[var(--ink)] sm:text-5xl"
           style={{ fontFamily: "var(--font-display), sans-serif" }}
@@ -71,8 +94,7 @@ export default function HomePage() {
           Translate a chapter the way you upload it.
         </h1>
         <p className="mt-4 max-w-xl text-base text-black/65">
-          Drop a ZIP/CBZ of Japanese or Korean pages. Choose full redraw, strip text only, or translate without
-          touching the art — pages unlock one-by-one.
+          Full redraw, strip text, translate-only, OCR-only, or typeset from edited regions — pages unlock one-by-one.
         </p>
       </header>
 
@@ -84,6 +106,11 @@ export default function HomePage() {
           onReset={() => {
             setJobId(null);
             setJob(null);
+            try {
+              window.localStorage.removeItem("komalingo.last_job");
+            } catch {
+              // ignore
+            }
           }}
         />
       ) : (
