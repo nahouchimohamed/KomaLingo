@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.db import init_db
 from app.logging_setup import configure_logging
-from app.routers import chapter_actions, chapter_download, chapter_list, chapter_pages, chapters
+from app.routers import chapter_actions, chapter_download, chapter_list, chapter_pages, chapter_regions_edit, chapters
 from app.schemas import HealthResponse
 from app.services.health import probe_health
 
@@ -24,6 +24,7 @@ app.include_router(chapter_list.router)
 app.include_router(chapter_actions.router)
 app.include_router(chapter_pages.router)
 app.include_router(chapter_download.router)
+app.include_router(chapter_regions_edit.router)
 app.include_router(chapters.router)
 
 
