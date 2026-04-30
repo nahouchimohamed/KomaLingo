@@ -2,7 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { ChapterStatus, PageRegions, PageStatus, RegionStatus } from "@/lib/api";
-import { downloadUrl, getPageRegions } from "@/lib/api";
+import {
+  cancelChapter,
+  downloadUrl,
+  getPageRegions,
+  partialDownloadUrl,
+  reprocessPage,
+  retryChapter,
+} from "@/lib/api";
+import { CompareSlider } from "@/components/CompareSlider";
+import { RegionEditor } from "@/components/RegionEditor";
+import { downloadText, regionsToCsv, regionsToTxt } from "@/lib/exportScript";
 
 type Props = {
   job: ChapterStatus;
@@ -12,12 +22,14 @@ type Props = {
 function modeLabel(mode: string): string {
   if (mode === "strip") return "Strip text";
   if (mode === "translate_only") return "Translate only";
+  if (mode === "ocr_only") return "OCR only";
+  if (mode === "typeset_from_json") return "Typeset from JSON";
   return "Full redraw";
 }
 
 function doneLabel(mode: string): string {
   if (mode === "strip") return "Text stripped — click to view";
-  if (mode === "translate_only") return "Translation ready — click for text";
+  if (mode === "translate_only" || mode === "ocr_only") return "Ready — click for text";
   return "Translated — click to view";
 }
 
@@ -31,16 +43,10 @@ function stageLabel(page: PageStatus, job: ChapterStatus): string {
     if (stage.startsWith("inpaint")) {
       return job.processing_mode === "strip" ? "Erasing text…" : "Cleaning bubbles…";
     }
-    if (stage.startsWith("typeset")) return "Drawing English…";
+    if (stage.startsWith("typeset")) return "Drawing text…";
     return stage;
   }
   return "Queued";
-}
-
-function downloadButtonLabel(mode: string): string {
-  if (mode === "strip") return "Download cleaned ZIP";
-  if (mode === "translate_only") return "Download pages + translations";
-  return "Download translated ZIP";
 }
 
 export function JobProgress({ job, onReset }: Props) {
@@ -48,23 +54,20 @@ export function JobProgress({ job, onReset }: Props) {
   const [viewer, setViewer] = useState<{ src: string; title: string; pageIndex: number } | null>(null);
   const [regions, setRegions] = useState<RegionStatus[] | null>(null);
   const [regionsLoading, setRegionsLoading] = useState(false);
+  const [compare, setCompare] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const hint = useMemo(() => {
     if (job.status === "completed") return "All pages ready.";
+    if (job.status === "cancelled") return "Job cancelled.";
     if (job.completed_pages === 0 && job.status === "processing") {
-      return "First page may take a bit while OCR models load. Later pages are faster — each finished page appears below.";
+      return "First page may take a bit while OCR models load.";
     }
-    if (job.processing_mode === "translate_only") {
-      return "Original art stays untouched. Open a finished page to read the English lines.";
-    }
-    if (job.processing_mode === "strip") {
-      return "Dialogue is erased from each page as it finishes. No translation is written back.";
-    }
-    return "Pages unlock one-by-one as they finish. Click any completed page to zoom.";
+    return "Pages unlock one-by-one. Use arrow keys in the viewer.";
   }, [job]);
 
   useEffect(() => {
-    if (!viewer || job.processing_mode !== "translate_only") {
+    if (!viewer) {
       setRegions(null);
       return;
     }
@@ -88,7 +91,28 @@ export function JobProgress({ job, onReset }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [viewer, job.job_id, job.pages, job.processing_mode]);
+  }, [viewer, job.job_id, job.pages]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (!viewer) return;
+      if (e.key === "Escape") setViewer(null);
+      if (e.key === "ArrowRight") {
+        const next = Math.min(job.pages.length - 1, viewer.pageIndex + 1);
+        const page = job.pages[next];
+        const src = page.preview_url || page.original_url;
+        if (src) setViewer({ src, title: page.filename, pageIndex: next });
+      }
+      if (e.key === "ArrowLeft") {
+        const next = Math.max(0, viewer.pageIndex - 1);
+        const page = job.pages[next];
+        const src = page.preview_url || page.original_url;
+        if (src) setViewer({ src, title: page.filename, pageIndex: next });
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [viewer, job.pages]);
 
   return (
     <section className="rise space-y-6">
@@ -100,15 +124,54 @@ export function JobProgress({ job, onReset }: Props) {
           </h2>
           <p className="mt-1 text-sm text-black/55">
             {job.completed_pages}/{job.total_pages} pages · {job.current_stage}
+            {job.failed_pages ? ` · ${job.failed_pages} failed` : ""}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {job.status === "processing" && (
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await cancelChapter(job.job_id);
+                } catch (err) {
+                  setActionError(err instanceof Error ? err.message : "Cancel failed");
+                }
+              }}
+              className="rounded-xl border border-[var(--line)] bg-white/70 px-4 py-2.5 text-sm font-medium"
+            >
+              Cancel
+            </button>
+          )}
+          {(job.status === "failed" || job.status === "cancelled" || job.status === "completed") && (
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await retryChapter(job.job_id);
+                } catch (err) {
+                  setActionError(err instanceof Error ? err.message : "Retry failed");
+                }
+              }}
+              className="rounded-xl border border-[var(--line)] bg-white/70 px-4 py-2.5 text-sm font-medium"
+            >
+              Retry
+            </button>
+          )}
+          {job.completed_pages > 0 && (
+            <a
+              href={partialDownloadUrl(job.job_id, "zip")}
+              className="rounded-xl border border-[var(--line)] bg-white/70 px-4 py-2.5 text-sm font-medium"
+            >
+              Partial ZIP
+            </a>
+          )}
           {job.download_ready && (
             <a
               href={downloadUrl(job.job_id)}
               className="rounded-xl bg-[var(--ink)] px-4 py-2.5 text-sm font-semibold text-[var(--paper)]"
             >
-              {downloadButtonLabel(job.processing_mode)}
+              Download ZIP
             </a>
           )}
           <button
@@ -139,9 +202,9 @@ export function JobProgress({ job, onReset }: Props) {
         <p className="mt-2 text-sm text-black/55">{hint}</p>
       </div>
 
-      {job.error && (
+      {(job.error || actionError) && (
         <div className="rounded-xl border border-[var(--accent)]/30 bg-[var(--accent)]/10 px-4 py-3 text-sm text-[var(--accent)]">
-          {job.error}
+          {actionError || job.error}
         </div>
       )}
 
@@ -178,9 +241,7 @@ export function JobProgress({ job, onReset }: Props) {
                   <img
                     src={imageSrc}
                     alt={page.filename}
-                    className={`h-full w-full object-cover transition ${
-                      page.status === "done" ? "" : "opacity-70"
-                    }`}
+                    className={`h-full w-full object-cover transition ${page.status === "done" ? "" : "opacity-70"}`}
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-xs uppercase tracking-wider text-black/35">
@@ -193,9 +254,7 @@ export function JobProgress({ job, onReset }: Props) {
                       ? "bg-[var(--ok)]"
                       : page.status === "processing"
                         ? "bg-[var(--accent)]"
-                        : page.status === "failed"
-                          ? "bg-[var(--accent)]"
-                          : "bg-black/45"
+                        : "bg-black/45"
                   }`}
                 >
                   {page.status}
@@ -204,6 +263,15 @@ export function JobProgress({ job, onReset }: Props) {
               <div className="space-y-1 px-3 py-3">
                 <p className="truncate text-sm font-medium">{page.filename}</p>
                 <p className="text-xs text-black/50">{stageLabel(page, job)}</p>
+                {page.status === "failed" && (
+                  <button
+                    type="button"
+                    className="text-xs font-medium text-[var(--accent)]"
+                    onClick={() => reprocessPage(job.job_id, page.index)}
+                  >
+                    Reprocess page
+                  </button>
+                )}
               </div>
             </article>
           );
@@ -223,40 +291,72 @@ export function JobProgress({ job, onReset }: Props) {
             aria-modal="true"
           >
             <div>
-              <div className="mb-2 flex items-center justify-between gap-3">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
                 <p className="truncate text-sm font-medium">{viewer.title}</p>
-                <button
-                  type="button"
-                  onClick={() => setViewer(null)}
-                  className="rounded-lg bg-[var(--ink)] px-3 py-1.5 text-xs font-semibold text-[var(--paper)]"
-                >
-                  Close
-                </button>
+                <div className="flex gap-2">
+                  {job.pages[viewer.pageIndex]?.original_url && job.pages[viewer.pageIndex]?.preview_url && (
+                    <button type="button" className="rounded-lg border border-[var(--line)] px-2 py-1 text-xs" onClick={() => setCompare((v) => !v)}>
+                      {compare ? "Single" : "Compare"}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setViewer(null)}
+                    className="rounded-lg bg-[var(--ink)] px-3 py-1.5 text-xs font-semibold text-[var(--paper)]"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={viewer.src} alt={viewer.title} className="max-h-[80vh] w-auto max-w-full rounded-lg" />
+              {compare && job.pages[viewer.pageIndex]?.original_url && job.pages[viewer.pageIndex]?.preview_url ? (
+                <CompareSlider
+                  beforeSrc={job.pages[viewer.pageIndex].original_url!}
+                  afterSrc={job.pages[viewer.pageIndex].preview_url!}
+                  alt={viewer.title}
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={viewer.src} alt={viewer.title} className="max-h-[80vh] w-auto max-w-full rounded-lg" />
+              )}
             </div>
-            {job.processing_mode === "translate_only" && (
-              <div className="rounded-xl border border-[var(--line)] bg-white/70 p-3">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-black/45">Translations</p>
-                {regionsLoading ? (
-                  <p className="text-sm text-black/50">Loading…</p>
-                ) : !regions || regions.length === 0 ? (
-                  <p className="text-sm text-black/50">No dialogue detected on this page.</p>
-                ) : (
-                  <ul className="max-h-[70vh] space-y-3 overflow-auto pr-1">
-                    {regions.map((region, index) => (
-                      <li key={`${region.bbox.join("-")}-${index}`} className="rounded-lg bg-[var(--paper-deep)]/60 p-3">
-                        <p className="text-xs text-black/45">{region.text || "—"}</p>
-                        <p className="mt-1 text-sm font-medium text-[var(--ink)]">
-                          {region.translation || "(no translation)"}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
+            <div className="space-y-3 rounded-xl border border-[var(--line)] bg-white/70 p-3">
+              {regionsLoading ? (
+                <p className="text-sm text-black/50">Loading…</p>
+              ) : regions && regions.length > 0 ? (
+                <>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      className="rounded-lg border border-[var(--line)] px-2 py-1 text-xs"
+                      onClick={() => downloadText(`${viewer.title}.txt`, regionsToTxt(regions))}
+                    >
+                      Export TXT
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-lg border border-[var(--line)] px-2 py-1 text-xs"
+                      onClick={() => downloadText(`${viewer.title}.csv`, regionsToCsv(regions), "text/csv")}
+                    >
+                      Export CSV
+                    </button>
+                  </div>
+                  <RegionEditor
+                    regions={regions}
+                    onSave={async (next) => {
+                      const res = await fetch(`/api/chapters/${job.job_id}/pages/${viewer.pageIndex}/regions`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ regions: next }),
+                      });
+                      if (!res.ok) throw new Error("Save failed");
+                      setRegions(next);
+                    }}
+                  />
+                </>
+              ) : (
+                <p className="text-sm text-black/50">No region sidecar for this page.</p>
+              )}
+            </div>
           </div>
         </div>
       )}
