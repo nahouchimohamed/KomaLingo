@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from app.pipeline.merge_vertical import is_verticalish, vertical_gap_ratio
 from app.pipeline.types import TextRegion
 
 
@@ -23,7 +24,9 @@ def merge_text_regions(regions: list[TextRegion], gap_ratio: float = 0.5) -> lis
 
     heights = [max(1, r.bbox[3] - r.bbox[1]) for r in regions]
     median_h = sorted(heights)[len(heights) // 2]
-    gap = max(8.0, median_h * gap_ratio)
+    lang_hint = next((r.language for r in regions if r.language in ("ja", "ko", "zh")), None)
+    ratio = vertical_gap_ratio(lang_hint) if any(is_verticalish(r) for r in regions) else gap_ratio
+    gap = max(8.0, median_h * ratio)
 
     # Reading order helps stable merges
     ordered = sorted(regions, key=lambda r: (r.bbox[1], r.bbox[0]))  # reading order
