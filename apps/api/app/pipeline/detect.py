@@ -1,4 +1,5 @@
 from app.pipeline.filters import filter_regions
+from app.pipeline.reading_order import sort_regions
 """Text region detection.
 
 MVP uses OCR bounding boxes as detection. A dedicated comic-text-detector
@@ -15,4 +16,4 @@ from app.pipeline.types import TextRegion
 
 def detect_text_regions(image_path: Path, source_lang: str = "auto") -> list[TextRegion]:
     ocr = get_ocr_provider()  # dedicated bubble detector can replace this later
-    return filter_regions(ocr.extract(image_path, source_lang=source_lang))  # already merged
+    return sort_regions(filter_regions(ocr.extract(image_path, source_lang=source_lang)), source_lang=source_lang)  # already merged
