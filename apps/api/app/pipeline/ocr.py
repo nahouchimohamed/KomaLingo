@@ -9,6 +9,7 @@ from pathlib import Path
 import cv2
 
 from app.config import get_settings
+from app.pipeline.lang_hints import hint_from_path
 from app.pipeline.image_ops import downscale_for_ocr, load_bgr, scale_bbox
 from app.pipeline.merge import merge_text_regions
 from app.pipeline.types import TextRegion
@@ -121,7 +122,7 @@ class PaddleOcrProvider(OcrProvider):
                 # Heuristic: Korean hangul pages often have denser horizontal text;
                 # start with Japanese (common for manga) unless path/name hints manhwa.
                 name = image_path.name.lower()
-                primary = "ko" if any(k in name for k in ("manhwa", "webtoon", "kr", "ko")) else "ja"  # heuristic
+                primary = hint_from_path(Path(image_path)) or ("ko" if any(k in name for k in ("manhwa", "webtoon", "kr", "ko")) else "ja")
                 secondary = "ko" if primary == "ja" else "ja"
             else:
                 primary, secondary = source_lang, None
