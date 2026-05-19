@@ -5,6 +5,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 from app.pipeline.fonts import candidates_for
+from app.pipeline.typeset_align import line_x
 from app.pipeline.types import TextRegion
 
 FONT_CANDIDATES = [
@@ -81,7 +82,7 @@ def render_translations(image_path: Path, regions: list[TextRegion], output_path
         y = y1 + max(0, (box_h - total_h) // 2)  # vertical center
         for line in lines:
             line_w = draw.textlength(line, font=font)
-            x = x1 + max(0, (box_w - line_w) // 2)
+            x = line_x("center", x1, box_w, line_w)
             # Thicker outline for busy artwork
             for ox, oy in (
                 (-2, 0),
