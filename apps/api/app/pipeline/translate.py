@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import httpx
 
 from app.config import get_settings
+from app.pipeline.failover import FailoverTranslateProvider
 from app.pipeline.retry import with_retries
 from app.pipeline.types import TextRegion
 from app.services.translation_cache import get_cached_translation, set_cached_translation
@@ -217,3 +218,7 @@ def get_translate_provider(override: str | None = None, api_key: str | None = No
     if provider == "mymemory":
         return MyMemoryTranslateProvider()
     return GoogleFreeTranslateProvider()
+
+
+def with_google_failover(primary, secondary):
+    return FailoverTranslateProvider(primary, secondary)
