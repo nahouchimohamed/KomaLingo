@@ -210,14 +210,14 @@ def get_translate_provider(override: str | None = None, api_key: str | None = No
         if key:
             return GeminiTranslateProvider(key)
         logger.warning("GEMINI_API_KEY missing; falling back to Google free translate")
-        return GoogleFreeTranslateProvider()
+        return with_google_failover(GoogleFreeTranslateProvider(), MyMemoryTranslateProvider())
     if provider == "google":
-        return GoogleFreeTranslateProvider()
+        return with_google_failover(GoogleFreeTranslateProvider(), MyMemoryTranslateProvider())
     if provider == "libre":
         return LibreTranslateProvider(settings.libretranslate_url)
     if provider == "mymemory":
         return MyMemoryTranslateProvider()
-    return GoogleFreeTranslateProvider()
+    return with_google_failover(GoogleFreeTranslateProvider(), MyMemoryTranslateProvider())
 
 
 def with_google_failover(primary, secondary):
