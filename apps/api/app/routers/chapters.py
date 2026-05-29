@@ -19,6 +19,7 @@ from app.schemas import (
     RegionStatus,
 )
 from app.services.limits import assert_page_count, assert_upload_size
+from app.services.rate_limit import enforce_upload_rate
 from app.services.queue import enqueue_chapter_job
 from app.services.storage import (
     ensure_clean_dir,
@@ -48,6 +49,7 @@ async def create_chapter(
 ) -> ChapterCreateResponse:
     if not files:
         raise HTTPException(status_code=400, detail="Upload a ZIP/CBZ or page images")
+    enforce_upload_rate("anon")
 
     settings = get_settings()
     job_id = str(uuid.uuid4())
