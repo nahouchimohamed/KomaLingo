@@ -12,7 +12,18 @@
   --line: rgba(18, 16, 14, 0.14);
   --ok: #2f6b4f;
   --warn: #b7791f;
+  --reader-bg: #0f0e0c;
+  --reader-fg: #f4ece2;
+  --reader-muted: rgba(244, 236, 226, 0.55);
 }
+
+body.reader-mode {
+  color: var(--reader-fg);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(196, 60, 40, 0.18), transparent 40%),
+    linear-gradient(180deg, #171410 0%, var(--reader-bg) 100%);
+}
+
 
 html,
 body {
