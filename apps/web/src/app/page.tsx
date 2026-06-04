@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { UploadPanel, UploadOptions } from "@/components/UploadPanel";
+import { ReaderToggle } from "@/components/ReaderToggle";
 import { JobProgress } from "@/components/JobProgress";
 import { ChapterStatus, createChapter, getChapter } from "@/lib/api";
 
@@ -86,6 +87,7 @@ export default function HomePage() {
           <Link href="/history" className="text-xs font-medium text-black/55 hover:text-[var(--accent)]">
             History
           </Link>
+          <ReaderToggle />
         </div>
         <h1
           className="text-4xl font-extrabold leading-tight tracking-tight text-[var(--ink)] sm:text-5xl"
