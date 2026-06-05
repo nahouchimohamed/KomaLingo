@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { MODE_COPY, ProcessingMode, UploadOptions } from "@/lib/uploadOptions";
+import { FileList } from "@/components/FileList";
 
 export type { UploadOptions, ProcessingMode };
 
