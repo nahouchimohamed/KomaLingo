@@ -78,3 +78,11 @@ body {
 .progress-pulse { /* active job indicator */
   animation: pulse-bar 1.4s ease-in-out infinite;
 }
+
+.page-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.page-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(18, 16, 14, 0.12);
+}
