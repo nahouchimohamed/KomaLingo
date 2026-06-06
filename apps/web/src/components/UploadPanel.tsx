@@ -140,12 +140,7 @@ export function UploadPanel({ onSubmit, busy }: Props) {
             onChange={(e) => e.target.files && acceptFiles(e.target.files)}
           />
         </label>
-        {files.length > 0 && (
-          <p className="mt-4 text-sm text-[var(--accent)]">
-            {files.length} file{files.length > 1 ? "s" : ""} ready
-            {files[0] ? ` · ${files[0].name}` : ""}
-          </p>
-        )}
+        <FileList files={files} onChange={setFiles} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
