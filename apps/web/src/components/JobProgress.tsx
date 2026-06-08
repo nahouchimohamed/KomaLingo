@@ -215,7 +215,7 @@ export function JobProgress({ job, onReset }: Props) {
           return (
             <article
               key={page.index}
-              className={`overflow-hidden rounded-2xl border bg-white/60 shadow-[0_10px_30px_rgba(18,16,14,0.06)] ${
+              className={`page-card overflow-hidden rounded-2xl border bg-white/60 shadow-[0_10px_30px_rgba(18,16,14,0.06)] ${
                 page.status === "done"
                   ? "border-[var(--ok)]/35"
                   : page.status === "processing"
