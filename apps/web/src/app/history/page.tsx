@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ChapterSummary, deleteChapter, listChapters } from "@/lib/api";
+import { StatusPill } from "@/components/StatusPill";
 
 export default function HistoryPage() {
   const [items, setItems] = useState<ChapterSummary[]>([]);
@@ -69,9 +70,12 @@ export default function HistoryPage() {
               <Link href={`/job/${job.job_id}`} className="font-semibold text-[var(--ink)] hover:underline">
                 {job.title}
               </Link>
-              <p className="text-xs text-black/50">
-                {job.status} · {job.completed_pages}/{job.total_pages} · {job.processing_mode}
-              </p>
+              <div className="mt-1 flex items-center gap-2 text-xs text-black/50">
+                <StatusPill status={job.status} />
+                <span>
+                  {job.completed_pages}/{job.total_pages} · {job.processing_mode}
+                </span>
+              </div>
             </div>
             <button
               type="button"
