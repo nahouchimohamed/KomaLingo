@@ -6,6 +6,7 @@ import tempfile
 from collections.abc import Callable
 from pathlib import Path
 
+from app.pipeline.blank import is_mostly_blank
 from app.pipeline.detect import detect_text_regions
 from app.pipeline.glossary import apply_glossary, parse_glossary
 from app.pipeline.inpaint import get_inpaint_provider
@@ -107,6 +108,12 @@ def process_page(
         _write_regions_sidecar(output_path, regions, mode)
         stage("done")
         return PageResult(regions=regions, output_path=str(output_path))
+
+    if mode != "typeset_from_json" and is_mostly_blank(image_path):
+        output_path.write_bytes(image_path.read_bytes())
+        _write_regions_sidecar(output_path, [], mode)
+        stage("done")
+        return PageResult(regions=[], output_path=str(output_path))
 
     stage("ocr")
     regions = detect_text_regions(image_path, source_lang=source_lang)
