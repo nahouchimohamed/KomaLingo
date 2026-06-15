@@ -221,7 +221,7 @@ def download_chapter(job_id: str, db: Session = Depends(get_db)) -> FileResponse
     zip_path = Path(job.result_zip)
     if not zip_path.exists():
         raise HTTPException(status_code=404, detail="Result archive missing")
-    filename = f"{job.title.replace(' ', '_')}_{job_id[:8]}_en.zip"
+    filename = f"{job.title.replace(' ', '_')}_{job_id[:8]}_{job.target_lang or 'en'}.zip"
     return FileResponse(zip_path, media_type="application/zip", filename=filename)
 
 
