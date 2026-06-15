@@ -11,6 +11,7 @@ import {
   retryChapter,
 } from "@/lib/api";
 import { CompareSlider } from "@/components/CompareSlider";
+import { ProgressRing } from "@/components/ProgressRing";
 import { RegionEditor } from "@/components/RegionEditor";
 import { downloadText, regionsToCsv, regionsToTxt } from "@/lib/exportScript";
 
@@ -118,7 +119,10 @@ export function JobProgress({ job, onReset }: Props) {
     <section className="rise space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-black/45">Job · {modeLabel(job.processing_mode)}</p>
+          <div className="flex items-center gap-3">
+            <ProgressRing value={pct} />
+            <p className="text-xs uppercase tracking-[0.18em] text-black/45">Job · {modeLabel(job.processing_mode)}</p>
+          </div>
           <h2 className="text-2xl font-bold" style={{ fontFamily: "var(--font-display), sans-serif" }}>
             {job.title}
           </h2>
