@@ -49,7 +49,7 @@ export default function HistoryPage() {
               setStatus(value);
               refresh(value);
             }}
-            className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
+            className={`filter-chip rounded-full px-3 py-1.5 text-xs font-semibold ${
               status === value ? "bg-[var(--accent)] text-white" : "bg-black/5 text-black/70"
             }`}
           >
