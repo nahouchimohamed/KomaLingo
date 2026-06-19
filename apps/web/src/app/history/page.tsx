@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ChapterSummary, deleteChapter, listChapters } from "@/lib/api";
 import { StatusPill } from "@/components/StatusPill";
+import { EmptyState } from "@/components/EmptyState";
 
 export default function HistoryPage() {
   const [items, setItems] = useState<ChapterSummary[]>([]);
@@ -97,7 +98,9 @@ export default function HistoryPage() {
             </button>
           </article>
         ))}
-        {!items.length && <p className="text-sm text-black/50">No jobs yet.</p>}
+        {!items.length && (
+          <EmptyState title="No jobs yet" body="Upload a chapter to see it listed here." />
+        )}
       </div>
     </main>
   );
