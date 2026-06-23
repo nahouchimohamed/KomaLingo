@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { UploadPanel, UploadOptions } from "@/components/UploadPanel";
-import { ReaderToggle } from "@/components/ReaderToggle";
+import { AppNav } from "@/components/AppNav";
 import { JobProgress } from "@/components/JobProgress";
 import { ChapterStatus, createChapter, getChapter } from "@/lib/api";
 
@@ -81,14 +81,8 @@ export default function HomePage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-5xl px-5 pb-20 pt-10 sm:px-8">
+      <AppNav />
       <header className="rise mb-10 max-w-2xl">
-        <div className="mb-3 flex flex-wrap items-center gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--accent)]">KomaLingo</p>
-          <Link href="/history" className="text-xs font-medium text-black/55 hover:text-[var(--accent)]">
-            History
-          </Link>
-          <ReaderToggle />
-        </div>
         <h1
           className="text-4xl font-extrabold leading-tight tracking-tight text-[var(--ink)] sm:text-5xl"
           style={{ fontFamily: "var(--font-display), sans-serif" }}
