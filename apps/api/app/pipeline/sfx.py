@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 
+from app.pipeline.bubble_score import dialogue_score
 from app.pipeline.types import TextRegion
 
 _SFX_RE = re.compile(
@@ -21,4 +22,4 @@ def looks_like_sfx(text: str) -> bool:
 def filter_sfx(regions: list[TextRegion], enabled: bool) -> list[TextRegion]:
     if not enabled:
         return regions
-    return [r for r in regions if not looks_like_sfx(r.text)]
+    return [r for r in regions if not looks_like_sfx(r.text) and dialogue_score(r) >= 0.25]
