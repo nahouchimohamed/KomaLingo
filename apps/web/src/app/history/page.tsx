@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AppNav } from "@/components/AppNav";
 import { useEffect, useState } from "react";
 import { ChapterSummary, deleteChapter, listChapters } from "@/lib/api";
 import { StatusPill } from "@/components/StatusPill";
@@ -31,17 +32,12 @@ export default function HistoryPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-5xl px-5 pb-20 pt-10 sm:px-8">
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--accent)]">KomaLingo</p>
-          <h1 className="text-3xl font-extrabold" style={{ fontFamily: "var(--font-display), sans-serif" }}>
-            Job history
-          </h1>
-          <p className="mt-2 text-sm text-black/55">{total} jobs</p>
-        </div>
-        <Link href="/" className="rounded-xl bg-[var(--ink)] px-4 py-2.5 text-sm font-semibold text-[var(--paper)]">
-          New chapter
-        </Link>
+      <AppNav />
+      <div className="mb-8">
+        <h1 className="text-3xl font-extrabold" style={{ fontFamily: "var(--font-display), sans-serif" }}>
+          Job history
+        </h1>
+        <p className="mt-2 text-sm text-black/55">{total} jobs</p>
       </div>
 
       <div className="mb-4 flex gap-2">
