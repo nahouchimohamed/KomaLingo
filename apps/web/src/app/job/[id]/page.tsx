@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { AppNav } from "@/components/AppNav";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { JobProgress } from "@/components/JobProgress";
@@ -42,14 +42,7 @@ export default function JobPage() {
 
   return (
     <main className="mx-auto min-h-screen max-w-5xl px-5 pb-20 pt-10 sm:px-8">
-      <div className="mb-6 flex gap-3 text-sm">
-        <Link href="/" className="text-[var(--accent)] hover:underline">
-          Upload
-        </Link>
-        <Link href="/history" className="text-[var(--accent)] hover:underline">
-          History
-        </Link>
-      </div>
+      <AppNav />
       {error && <p className="text-sm text-[var(--accent)]">{error}</p>}
       {job ? (
         <JobProgress job={job} onReset={() => (window.location.href = "/")} />
