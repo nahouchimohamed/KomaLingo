@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     skip_sfx: bool = False
     continue_on_page_error: bool = True
     translation_cache_ttl: int = 86400
+    output_jpeg_quality: int = 92
 
     @property
     def uploads_dir(self) -> Path:
