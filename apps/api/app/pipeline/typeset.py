@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from app.config import get_settings
+
 from PIL import Image, ImageDraw, ImageFont
 
 from app.pipeline.fonts import candidates_for
@@ -106,7 +108,7 @@ def render_translations(image_path: Path, regions: list[TextRegion], output_path
     # Keep JPEG-ish pages reasonably small
     suffix = output_path.suffix.lower()
     if suffix in {".jpg", ".jpeg"}:
-        image.save(output_path, quality=92, optimize=True)  # avoid huge outputs
+        image.save(output_path, quality=get_settings().output_jpeg_quality, optimize=True)
     else:
         image.save(output_path)
     return output_path
