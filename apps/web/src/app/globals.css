@@ -89,3 +89,13 @@ body {
 
 .filter-chip { transition: background-color 0.15s ease, transform 0.15s ease; }
 .filter-chip:hover { transform: translateY(-1px); }
+
+.soft-panel {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 12px 40px rgba(18, 16, 14, 0.08);
+}
+body.reader-mode .soft-panel {
+  background: rgba(28, 24, 20, 0.72);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
