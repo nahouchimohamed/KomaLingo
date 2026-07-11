@@ -110,7 +110,7 @@ export function UploadPanel({ onSubmit, busy }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rise space-y-5">
+    <form onSubmit={handleSubmit} className="rise soft-panel space-y-5 rounded-3xl p-5 sm:p-6">
       <div
         className={`dropzone rounded-2xl border-2 border-dashed border-[var(--line)] bg-white/50 px-6 py-12 text-center ${dragOver ? "active" : ""}`}
         onDragOver={(e) => {
