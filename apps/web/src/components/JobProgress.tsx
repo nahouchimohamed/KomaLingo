@@ -116,7 +116,7 @@ export function JobProgress({ job, onReset }: Props) {
   }, [viewer, job.pages]);
 
   return (
-    <section className="rise space-y-6">
+    <section className="rise soft-panel space-y-6 rounded-3xl p-5 sm:p-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="flex items-center gap-3">
