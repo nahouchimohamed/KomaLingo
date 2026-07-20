@@ -12,6 +12,7 @@ import {
 } from "@/lib/api";
 import { CompareSlider } from "@/components/CompareSlider";
 import { ProgressRing } from "@/components/ProgressRing";
+import { ZoomControls } from "@/components/ZoomControls";
 import { RegionEditor } from "@/components/RegionEditor";
 import { downloadText, regionsToCsv, regionsToTxt } from "@/lib/exportScript";
 
@@ -56,6 +57,7 @@ export function JobProgress({ job, onReset }: Props) {
   const [regions, setRegions] = useState<RegionStatus[] | null>(null);
   const [regionsLoading, setRegionsLoading] = useState(false);
   const [compare, setCompare] = useState(false);
+  const [zoom, setZoom] = useState(1);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const hint = useMemo(() => {
@@ -302,6 +304,7 @@ export function JobProgress({ job, onReset }: Props) {
                     <button type="button" className="rounded-lg border border-[var(--line)] px-2 py-1 text-xs" onClick={() => setCompare((v) => !v)}>
                       {compare ? "Single" : "Compare"}
                     </button>
+                  <ZoomControls zoom={zoom} onChange={setZoom} />
                   )}
                   <button
                     type="button"
@@ -320,7 +323,7 @@ export function JobProgress({ job, onReset }: Props) {
                 />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={viewer.src} alt={viewer.title} className="max-h-[80vh] w-auto max-w-full rounded-lg" />
+                <img src={viewer.src} alt={viewer.title} className="max-h-[80vh] w-auto max-w-full rounded-lg origin-top-left transition-transform" style={{ transform: `scale(${zoom})` }} />
               )}
             </div>
             <div className="space-y-3 rounded-xl border border-[var(--line)] bg-white/70 p-3">
