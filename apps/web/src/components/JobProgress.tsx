@@ -13,6 +13,7 @@ import {
 import { CompareSlider } from "@/components/CompareSlider";
 import { ProgressRing } from "@/components/ProgressRing";
 import { ZoomControls } from "@/components/ZoomControls";
+import { Toast } from "@/components/Toast";
 import { RegionEditor } from "@/components/RegionEditor";
 import { downloadText, regionsToCsv, regionsToTxt } from "@/lib/exportScript";
 
@@ -283,6 +284,8 @@ export function JobProgress({ job, onReset }: Props) {
           );
         })}
       </div>
+
+            <Toast message={actionError} onClose={() => setActionError(null)} />
 
       {viewer && (
         <div
