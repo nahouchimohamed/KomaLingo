@@ -14,6 +14,7 @@ import { CompareSlider } from "@/components/CompareSlider";
 import { ProgressRing } from "@/components/ProgressRing";
 import { ZoomControls } from "@/components/ZoomControls";
 import { Toast } from "@/components/Toast";
+import { PageSkeleton } from "@/components/PageSkeleton";
 import { RegionEditor } from "@/components/RegionEditor";
 import { downloadText, regionsToCsv, regionsToTxt } from "@/lib/exportScript";
 
@@ -250,6 +251,8 @@ export function JobProgress({ job, onReset }: Props) {
                     alt={page.filename}
                     className={`h-full w-full object-cover transition ${page.status === "done" ? "" : "opacity-70"}`}
                   />
+                ) : page.status === "pending" ? (
+                  <div className="p-2"><PageSkeleton /></div>
                 ) : (
                   <div className="flex h-full items-center justify-center text-xs uppercase tracking-wider text-black/35">
                     {page.status}
