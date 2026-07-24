@@ -15,6 +15,7 @@ import { ProgressRing } from "@/components/ProgressRing";
 import { ZoomControls } from "@/components/ZoomControls";
 import { Toast } from "@/components/Toast";
 import { PageSkeleton } from "@/components/PageSkeleton";
+import { ScrollReader } from "@/components/ScrollReader";
 import { RegionEditor } from "@/components/RegionEditor";
 import { downloadText, regionsToCsv, regionsToTxt } from "@/lib/exportScript";
 
@@ -60,6 +61,7 @@ export function JobProgress({ job, onReset }: Props) {
   const [regionsLoading, setRegionsLoading] = useState(false);
   const [compare, setCompare] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const [scrollMode, setScrollMode] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const hint = useMemo(() => {
@@ -184,6 +186,13 @@ export function JobProgress({ job, onReset }: Props) {
           )}
           <button
             type="button"
+            onClick={() => setScrollMode((v) => !v)}
+            className="rounded-xl border border-[var(--line)] bg-white/70 px-4 py-2.5 text-sm font-medium"
+          >
+            {scrollMode ? "Grid view" : "Scroll view"}
+          </button>
+          <button
+            type="button"
             onClick={onReset}
             className="rounded-xl border border-[var(--line)] bg-white/70 px-4 py-2.5 text-sm font-medium"
           >
@@ -216,6 +225,13 @@ export function JobProgress({ job, onReset }: Props) {
         </div>
       )}
 
+      {scrollMode ? (
+        <ScrollReader
+          images={job.pages
+            .filter((p) => p.preview_url || p.original_url)
+            .map((p) => ({ src: (p.preview_url || p.original_url)!, title: p.filename }))}
+        />
+      ) : (
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {job.pages.map((page) => {
           const imageSrc = page.preview_url || page.original_url;
