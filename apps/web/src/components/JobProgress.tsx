@@ -18,6 +18,7 @@ import { PageSkeleton } from "@/components/PageSkeleton";
 import { ScrollReader } from "@/components/ScrollReader";
 import { RegionEditor } from "@/components/RegionEditor";
 import { downloadText, regionsToCsv, regionsToTxt } from "@/lib/exportScript";
+import { SOURCE_LABELS, TARGET_LABELS, langLabel } from "@/lib/langs";
 
 type Props = {
   job: ChapterStatus;
@@ -133,7 +134,7 @@ export function JobProgress({ job, onReset }: Props) {
             {job.title}
           </h2>
           <p className="mt-1 text-sm text-black/55">
-            {job.completed_pages}/{job.total_pages} pages · {job.current_stage}
+            {job.completed_pages}/{job.total_pages} pages · {langLabel(job.source_lang, SOURCE_LABELS)} → {langLabel(job.target_lang, TARGET_LABELS)} · {job.current_stage}
             {job.failed_pages ? ` · ${job.failed_pages} failed` : ""}
           </p>
         </div>
