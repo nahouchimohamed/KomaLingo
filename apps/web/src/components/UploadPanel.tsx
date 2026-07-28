@@ -260,6 +260,7 @@ export function UploadPanel({ onSubmit, busy }: Props) {
           className="w-full rounded-xl border border-[var(--line)] bg-white/80 px-3 py-2.5 outline-none ring-[var(--accent)] focus:ring-2"
         />
         <p className="mt-1 text-xs text-black/45">One `source=target` per line, or a JSON object.</p>
+        <GlossaryPreview raw={glossary} />
       </label>
 
       {uploadPct !== null && (
