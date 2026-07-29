@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { ChapterSummary, deleteChapter, listChapters } from "@/lib/api";
 import { StatusPill } from "@/components/StatusPill";
 import { EmptyState } from "@/components/EmptyState";
+import { ModeBadge } from "@/components/ModeBadge";
 
 export default function HistoryPage() {
   const [items, setItems] = useState<ChapterSummary[]>([]);
@@ -69,8 +70,9 @@ export default function HistoryPage() {
               </Link>
               <div className="mt-1 flex items-center gap-2 text-xs text-black/50">
                 <StatusPill status={job.status} />
-                <span>
-                  {job.completed_pages}/{job.total_pages} · {job.processing_mode}
+                <span className="inline-flex items-center gap-2">
+                  {job.completed_pages}/{job.total_pages}
+                  <ModeBadge mode={job.processing_mode} />
                 </span>
               </div>
             </div>
