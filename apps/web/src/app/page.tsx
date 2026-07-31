@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { UploadPanel, UploadOptions } from "@/components/UploadPanel";
 import { AppNav } from "@/components/AppNav";
+import { HealthBanner } from "@/components/HealthBanner";
 import { JobProgress } from "@/components/JobProgress";
 import { ChapterStatus, createChapter, getChapter } from "@/lib/api";
 
@@ -82,6 +83,7 @@ export default function HomePage() {
   return (
     <main className="mx-auto min-h-screen max-w-5xl px-5 pb-20 pt-10 sm:px-8">
       <AppNav />
+      <HealthBanner />
       <header className="rise mb-10 max-w-2xl">
         <h1
           className="text-4xl font-extrabold leading-tight tracking-tight text-[var(--ink)] sm:text-5xl"
