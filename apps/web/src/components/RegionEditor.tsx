@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { RegionStatus } from "@/lib/api";
+import { confidenceColor, confidenceLabel } from "@/lib/confidence";
 
 type Props = {
   regions: RegionStatus[];
@@ -19,7 +20,12 @@ export function RegionEditor({ regions, onSave }: Props) {
       <ul className="max-h-[50vh] space-y-2 overflow-auto">
         {draft.map((region, index) => (
           <li key={`${region.bbox.join("-")}-${index}`} className="rounded-lg bg-[var(--paper-deep)]/60 p-2">
-            <p className="text-xs text-black/45">{region.text}</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs text-black/45">{region.text}</p>
+              <span className={`text-[10px] font-semibold uppercase ${confidenceColor(region.confidence)}`}>
+                {confidenceLabel(region.confidence)}
+              </span>
+            </div>
             <textarea
               className="mt-1 w-full rounded-md border border-[var(--line)] bg-white/80 px-2 py-1 text-sm"
               rows={2}
