@@ -8,6 +8,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from app.pipeline.fonts import candidates_for
 from app.pipeline.typeset_align import line_x
+from app.pipeline.typeset_style import outline_width
 from app.pipeline.types import TextRegion
 
 FONT_CANDIDATES = [
