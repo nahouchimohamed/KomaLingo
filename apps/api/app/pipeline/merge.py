@@ -17,7 +17,7 @@ def _overlap_or_near(a: TextRegion, b: TextRegion, gap: float) -> bool:
     return not (ax2 < bx1 or bx2 < ax1 or ay2 < by1 or by2 < ay1)
 
 
-def merge_text_regions(regions: list[TextRegion], gap_ratio: float = 0.5) -> list[TextRegion]:  # tighter bubble groups
+def merge_text_regions(regions: list[TextRegion], gap_ratio: float = 0.5, max_cluster: int = 12) -> list[TextRegion]:
     """Cluster spatially close OCR hits so one bubble becomes one translation unit."""
     if len(regions) <= 1:
         return regions
@@ -35,7 +35,7 @@ def merge_text_regions(regions: list[TextRegion], gap_ratio: float = 0.5) -> lis
     for region in ordered:
         placed = False
         for cluster in clusters:
-            if any(_overlap_or_near(region, other, gap) for other in cluster):
+            if len(cluster) < max_cluster and any(_overlap_or_near(region, other, gap) for other in cluster):
                 cluster.append(region)
                 placed = True
                 break
