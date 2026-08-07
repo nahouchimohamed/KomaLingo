@@ -99,3 +99,12 @@ body.reader-mode .soft-panel {
   background: rgba(28, 24, 20, 0.72);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
 }
+
+.dropzone.active::after {
+  content: "Drop to add pages";
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent);
+}
