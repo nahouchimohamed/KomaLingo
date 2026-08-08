@@ -108,3 +108,5 @@ body.reader-mode .soft-panel {
   font-weight: 600;
   color: var(--accent);
 }
+
+.pressable:active { transform: translateY(1px) scale(0.99); }
