@@ -25,7 +25,7 @@ export function AppNav() {
                 key={link.href}
                 href={link.href}
                 className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-                  active ? "bg-[var(--ink)] text-[var(--paper)]" : "text-black/60"
+                  active ? "bg-[var(--ink)] text-[var(--paper)] shadow-[0_0_0_1px_rgba(196,60,40,0.35)]" : "text-black/60"
                 }`}
               >
                 {link.label}
