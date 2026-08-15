@@ -140,6 +140,7 @@ export function UploadPanel({ onSubmit, busy }: Props) {
             onChange={(e) => e.target.files && acceptFiles(e.target.files)}
           />
         </label>
+        {files.length > 0 && <p className="mt-3 text-xs text-black/50">{files.length} pages selected</p>}
         <FileList files={files} onChange={setFiles} />
       </div>
 
