@@ -12,6 +12,8 @@ export function CompareSlider({ beforeSrc, afterSrc, alt }: Props) {
   const [pct, setPct] = useState(50);
   return (
     <div className="relative overflow-hidden rounded-lg">
+      <span className="pointer-events-none absolute left-2 top-2 z-10 rounded bg-black/55 px-2 py-0.5 text-[10px] font-semibold uppercase text-white">Original</span>
+      <span className="pointer-events-none absolute right-2 top-2 z-10 rounded bg-black/55 px-2 py-0.5 text-[10px] font-semibold uppercase text-white">Result</span>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={beforeSrc} alt={`${alt} original`} className="block w-full" />
       <div className="absolute inset-0 overflow-hidden" style={{ width: `${pct}%` }}>
