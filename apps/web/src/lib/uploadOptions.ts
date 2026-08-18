@@ -21,7 +21,7 @@ export const MODE_COPY: Record<ProcessingMode, { label: string; hint: string; su
   },
   strip: {
     label: "Strip text only",
-    hint: "Detect and erase dialogue without translating.",
+    hint: "Erase dialogue bubbles and leave clean art — no translation pass.",
     submit: "Strip text from pages",
   },
   translate_only: {
