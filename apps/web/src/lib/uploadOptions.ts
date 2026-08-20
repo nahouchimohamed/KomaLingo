@@ -31,7 +31,7 @@ export const MODE_COPY: Record<ProcessingMode, { label: string; hint: string; su
   },
   ocr_only: {
     label: "OCR only",
-    hint: "Detect bubbles and save region JSON without translating.",
+    hint: "Run OCR only and save bubble boxes as JSON for later editing.",
     submit: "Run OCR only",
   },
   typeset_from_json: {
