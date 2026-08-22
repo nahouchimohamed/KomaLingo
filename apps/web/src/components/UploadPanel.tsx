@@ -219,7 +219,7 @@ export function UploadPanel({ onSubmit, busy }: Props) {
         </label>
         <label className="mt-6 flex items-center gap-2 text-sm">
           <input type="checkbox" checked={skipSfx} onChange={(e) => setSkipSfx(e.target.checked)} />
-          <span className="font-medium text-black/70">Skip likely SFX bubbles</span>
+          <span className="font-medium text-black/70">Skip likely SFX bubbles <span className="font-normal text-black/45">(short sound-effect glyphs)</span></span>
         </label>
       </div>
 
