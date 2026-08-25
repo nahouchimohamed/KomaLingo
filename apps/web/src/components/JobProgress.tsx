@@ -178,12 +178,20 @@ export function JobProgress({ job, onReset }: Props) {
             </a>
           )}
           {job.download_ready && (
-            <a
-              href={downloadUrl(job.job_id)}
-              className="rounded-xl bg-[var(--ink)] px-4 py-2.5 text-sm font-semibold text-[var(--paper)]"
-            >
-              Download ZIP
-            </a>
+            <>
+              <a
+                href={downloadUrl(job.job_id)}
+                className="rounded-xl bg-[var(--ink)] px-4 py-2.5 text-sm font-semibold text-[var(--paper)]"
+              >
+                Download ZIP
+              </a>
+              <a
+                href={partialDownloadUrl(job.job_id, "cbz")}
+                className="rounded-xl border border-[var(--line)] bg-white/70 px-4 py-2.5 text-sm font-medium"
+              >
+                Download CBZ
+              </a>
+            </>
           )}
           <button
             type="button"
