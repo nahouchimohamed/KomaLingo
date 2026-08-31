@@ -51,7 +51,7 @@ class Cv2InpaintProvider(InpaintProvider):  # default free path
         return output_path
 
 
-class FillInpaintProvider(InpaintProvider):
+class FillInpaintProvider  # solid fill fallback(InpaintProvider):
     """Median border fill — cheap fallback when cv2 inpaint is undesirable."""
 
     def erase(self, image_path: Path, regions: list[TextRegion], output_path: Path) -> Path:
