@@ -9,6 +9,7 @@ import httpx
 
 from app.config import get_settings
 from app.pipeline.failover import FailoverTranslateProvider
+from app.pipeline.http_timeouts import TRANSLATE_TIMEOUT
 from app.pipeline.retry import with_retries
 from app.pipeline.types import TextRegion
 from app.services.translation_cache import get_cached_translation, set_cached_translation
@@ -48,7 +49,7 @@ class GoogleFreeTranslateProvider(TranslateProvider):  # no API key
                 "dt": "t",
                 "q": text,
             },
-            timeout=30.0,
+            timeout=TRANSLATE_TIMEOUT,
         )
         resp.raise_for_status()
         data = resp.json()
@@ -67,7 +68,7 @@ class GoogleFreeTranslateProvider(TranslateProvider):  # no API key
         max_workers = min(8, max(1, len(regions)))  # concurrent HTTP
         results: dict[int, str] = {}
 
-        with httpx.Client(timeout=30.0) as client:
+        with httpx.Client(timeout=TRANSLATE_TIMEOUT) as client:
             def work(idx: int, region: TextRegion) -> tuple[int, str]:
                 source = _detect_source(region.text, region.language)
                 if source == "auto":
