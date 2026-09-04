@@ -110,3 +110,7 @@ body.reader-mode .soft-panel {
 }
 
 .pressable:active { transform: translateY(1px) scale(0.99); }
+
+.lightbox-shell {
+  animation: rise-in 0.25s ease-out both;
+}
