@@ -330,7 +330,7 @@ export function JobProgress({ job, onReset }: Props) {
           role="presentation"
         >
           <div
-            className="grid max-h-[92vh] w-full max-w-5xl gap-4 overflow-auto rounded-2xl bg-[var(--paper)] p-3 shadow-2xl lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.9fr)]"
+            className="lightbox-shell grid max-h-[92vh] w-full max-w-5xl gap-4 overflow-auto rounded-2xl bg-[var(--paper)] p-3 shadow-2xl lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.9fr)]"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
