@@ -227,7 +227,7 @@ export function JobProgress({ job, onReset }: Props) {
         </div>
         <div className="overflow-hidden rounded-full bg-black/10">
           <div
-            className={`h-2 rounded-full bg-[var(--accent)] transition-[width] duration-500 ${
+            className={`h-2.5 rounded-full bg-[var(--accent)] transition-[width] duration-500 ${
               job.status === "processing" ? "progress-pulse" : ""
             }`}
             style={{ width: `${Math.max(pct, job.status === "pending" ? 3 : pct)}%` }}
