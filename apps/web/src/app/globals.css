@@ -114,3 +114,5 @@ body.reader-mode .soft-panel {
 .lightbox-shell {
   animation: rise-in 0.25s ease-out both;
 }
+
+body.reader-mode a { color: #f0b4a6; }
