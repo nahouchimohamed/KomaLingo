@@ -275,7 +275,7 @@ export function UploadPanel({ onSubmit, busy }: Props) {
       <button
         type="submit"
         disabled={busy}
-        className="w-full rounded-xl bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+        className="pressable w-full rounded-xl bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {busy ? "Uploading chapter…" : modeMeta.submit}
       </button>
