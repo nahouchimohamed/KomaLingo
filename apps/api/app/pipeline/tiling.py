@@ -11,7 +11,7 @@ def should_tile(image: np.ndarray, *, min_aspect: float = 2.4) -> bool:
     return h > 0 and (h / max(w, 1)) >= min_aspect
 
 
-def split_tall_image(image_path: Path, out_dir: Path, *, tile_height: int = 2400, overlap: int = 80) -> list[Path]:
+def split_tall_image(image_path: Path, out_dir: Path, *, tile_height: int = 2400, overlap: int = 120) -> list[Path]:
     """Slice tall manhwa strips into overlapping tiles for more stable OCR."""
     image = cv2.imread(str(image_path))
     if image is None:
