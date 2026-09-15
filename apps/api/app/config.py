@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     continue_on_page_error: bool = True
     translation_cache_ttl: int = 86400
     output_jpeg_quality: int = 92
+    typeset_padding: int = 4
 
     @property
     def uploads_dir(self) -> Path:
