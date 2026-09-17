@@ -77,7 +77,7 @@ def render_translations(image_path: Path, regions: list[TextRegion], output_path
             continue
         x1, y1, x2, y2 = region.bbox
         # Slight inset so text sits inside the cleaned bubble
-        pad = 4  # keep away from bubble edge
+        pad = get_settings().typeset_padding
         x1, y1, x2, y2 = x1 + pad, y1 + pad, x2 - pad, y2 - pad
         box_w, box_h = max(12, x2 - x1), max(12, y2 - y1)
         font, lines, line_h = _fit_font(text, box_w, box_h, draw)
