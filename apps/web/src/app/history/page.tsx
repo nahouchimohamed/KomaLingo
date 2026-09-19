@@ -7,6 +7,7 @@ import { ChapterSummary, deleteChapter, listChapters } from "@/lib/api";
 import { StatusPill } from "@/components/StatusPill";
 import { EmptyState } from "@/components/EmptyState";
 import { ModeBadge } from "@/components/ModeBadge";
+import { filterJobs } from "@/lib/historyFilter";
 
 export default function HistoryPage() {
   const [items, setItems] = useState<ChapterSummary[]>([]);
@@ -14,6 +15,7 @@ export default function HistoryPage() {
   const [status, setStatus] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
   async function refresh(nextStatus = status) {
     try {
@@ -41,6 +43,12 @@ export default function HistoryPage() {
         <p className="mt-2 text-sm text-black/55">{total} jobs</p>
       </div>
 
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search title or job id"
+        className="mb-4 w-full rounded-xl border border-[var(--line)] bg-white/80 px-3 py-2 text-sm outline-none ring-[var(--accent)] focus:ring-2"
+      />
       <div className="mb-4 flex gap-2">
         {["", "processing", "completed", "failed", "cancelled"].map((value) => (
           <button
@@ -62,7 +70,7 @@ export default function HistoryPage() {
       {error && <p className="mb-4 text-sm text-[var(--accent)]">{error}</p>}
 
       <div className="space-y-3">
-        {items.map((job) => (
+        {filterJobs(items, query).map((job) => (
           <article key={job.job_id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--line)] bg-white/70 px-4 py-3">
             <div>
               <Link href={`/job/${job.job_id}`} className="font-semibold text-[var(--ink)] hover:underline">
