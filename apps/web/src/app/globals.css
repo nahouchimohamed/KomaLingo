@@ -120,3 +120,8 @@ body.reader-mode a { color: #f0b4a6; }
 @media (prefers-reduced-motion: reduce) {
   .rise, .progress-pulse, .lightbox-shell, .page-card { animation: none !important; transition: none !important; }
 }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
