@@ -304,7 +304,7 @@ export function JobProgress({ job, onReset }: Props) {
                 </span>
               </button>
               <div className="space-y-1 px-3 py-3">
-                <p className="truncate text-sm font-medium">{page.filename}</p>
+                <p className="truncate font-mono text-sm font-medium">{page.filename}</p>
                 <p className="text-xs text-black/50">{stageLabel(page, job)}</p>
                 {page.status === "failed" && (
                   <button
