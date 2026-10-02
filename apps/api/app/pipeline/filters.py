@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.config import get_settings
+from app.pipeline.min_box import large_enough
 from app.pipeline.types import TextRegion
 
 
@@ -18,6 +19,8 @@ def filter_regions(regions: list[TextRegion]) -> list[TextRegion]:
         if region.confidence < min_conf:
             continue
         if region_area(region) < min_area:
+            continue
+        if not large_enough(region):
             continue
         kept.append(region)
     return kept
