@@ -81,7 +81,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-5xl px-5 pb-20 pt-10 sm:px-8">
+    <main className="mx-auto min-h-screen max-w-6xl px-5 pb-20 pt-10 sm:px-8">
       <AppNav />
       <HealthBanner />
       <header className="rise mb-10 max-w-2xl">
